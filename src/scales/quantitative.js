@@ -123,10 +123,19 @@ export function createScaleQ(
   if (zero) {
     const [min, max] = extent(domain);
     if (min > 0 || max < 0) {
+      // preserve polylinear domain order and avoid mutating input
       domain = slice(domain);
-      const o = orderof(domain) || 1; // treat degenerate as ascending
-      if (o === Math.sign(min)) domain[0] = 0; // [1, 2] or [-1, -2]
-      else domain[domain.length - 1] = 0; // [2, 1] or [-2, -1]
+      // Determine ascending (true) or descending (false) ordering of domain array
+      const ascending = orderof(domain) >= 0; // treat degenerate as ascending
+      // If domain is all positive, ensure the lower bound is zero; if all
+      // negative, ensure the upper bound is zero. Respect ascending/descending
+      // by writing to the appropriate end of the domain array.
+      if (min > 0) {
+        if (ascending) domain[0] = 0; else domain[domain.length - 1] = 0;
+      } else {
+        // max < 0
+        if (ascending) domain[domain.length - 1] = 0; else domain[0] = 0;
+      }
     }
   }
 
